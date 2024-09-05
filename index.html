@@ -21,19 +21,39 @@
 <body>
     <div id="intro">
         <h2>Benefits of 34-38 Hz Stimulation</h2>
-        <p>Recent research suggests that 34-38 Hz stimulation may be more effective than 40 Hz for entraining gamma waves, potentially benefiting cognitive function and Alzheimer's treatment. This frequency range has shown promise in enhancing neural synchronization, information routing, and cortical communication.</p>
+        <p>Recent research suggests that 34-38 Hz stimulation may be more effective than 40 Hz for entraining gamma waves, potentially benefiting cognitive function and Alzheimer's treatment. This frequency range has shown promise in enhancing neural synchronization, information routing, and cortical communication. 
+Clinical Applications
+Research has demonstrated promising results for several applications:
+Alzheimer's Disease (AD):
+Cognitive improvement in patients with mild AD.
+Reduced brain atrophy in AD patients.
+Improved functional connectivity in the brains of AD patients.
+General Cognitive Benefits:
+Potential improvements in sleep quality.
+Possible positive effects on mood.
+Indications of enhanced memory function.
+Gamma wave states, particularly around 40 Hz, are associated with expert-level meditation and may assist in reshaping brain structures. 
+</p>
     </div>
     <div id="warning">
         <h2>Warning: Non-Medical Use Only</h2>
-        <p>This tool is for experimental and recreational purposes only. It is not a medical device and should not be used to diagnose, treat, cure, or prevent any disease. If you have a history of epilepsy or seizures, do not use this tool. Consult a healthcare professional before use.</p>
+        <p>This tool is for experimental and recreational purposes only. It is not a medical device and should not be used to diagnose, treat, cure, or prevent any disease. If you have a history of epilepsy or seizures, do not use this tool. Consult a healthcare professional before use. Gamma stimulation has been shown to be generally safe and well-tolerated:
+Clinical trials have reported no severe adverse effects.
+The stimulation does not trigger epileptiform activity, even in epilepsy patients.
+However, it's important to note that more research is needed to fully establish long-term safety profiles.</p>
         <p>For a better experience, please use headphones. Bilateral stimulation is particularly beneficial for trauma recovery.</p>
-        <p>Based on the provided research, we recommend using white light at 400 cd/m² intensity, a flickering frequency of 34-38 Hz, and a stimulation period of 1 hour daily for a week.</p>
+        <p>Based on the provided research, we recommend using heterochromatic red and blue light at 400 cd/m² intensity, a flickering frequency of 34-38 Hz, and a stimulation period of 1 hour daily for a week. </br> </br>
+      Research:  </br>https://doi.org/10.1038/s41598-024-52679-z
+      </br>
+https://doi.org/10.1038/s41598-021-95550-1
+
+      </p>
         <button id="acceptWarning">I Understand</button>
     </div>
     <div id="mainContent" style="display:none;">
         <h1>Advanced Audio-Visual Stimulation Tool</h1>
         <div id="stimulationArea">
-            <div id="flashArea" style="background-color: #FF0000;"></div>
+            <div id="flashArea" style="background-color: #0000FF;"></div>
             <div id="ballArea">
                 <div id="ball" style="background-color: black;"></div>
             </div>
@@ -92,7 +112,7 @@
             </div>
             <div>
                 <label for="bgColor">Background Color:</label>
-                <input type="color" id="bgColor" value="#FFFFFF">
+                <input type="color" id="bgColor" value="#0000FF">
             </div>
             <div>
                 <label for="flashColor">Flash Color:</label>
@@ -156,6 +176,8 @@ document.getElementById('fullscreenBtn').addEventListener('click', function() {
         stimulationArea.webkitRequestFullscreen();
     } else if (stimulationArea.msRequestFullscreen) {
         stimulationArea.msRequestFullscreen();
+    } else if (stimulationArea.webkitEnterFullscreen) { // For iOS Safari
+        stimulationArea.webkitEnterFullscreen();
     }
     document.addEventListener('keydown', (e) => {
         if (e.key === ' ') {
@@ -167,6 +189,7 @@ document.getElementById('fullscreenBtn').addEventListener('click', function() {
         }
     });
 });
+
 
 ['visualFreq', 'audioFreq', 'leftFreq', 'rightFreq', 'audioSpeed'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateStimulation);
