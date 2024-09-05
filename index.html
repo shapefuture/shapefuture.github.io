@@ -1,0 +1,283 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Audio-Visual Stimulation Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; }
+        #intro, #warning { background-color: #ffcccc; border: 2px solid #ff0000; padding: 20px; margin-bottom: 20px; }
+        #mainContent { max-width: 800px; margin: 0 auto; }
+        #controls { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        #controls > div { display: flex; flex-direction: column; }
+        #stimulationArea { width: 100%; height: 400px; position: relative; overflow: hidden; margin-bottom: 20px; }
+        #flashArea, #ballArea { width: 100%; height: 100%; position: absolute; }
+        #ball { width: 20px; height: 20px; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        #status, #ballFreqIndicator, #audioSpeedIndicator { margin-bottom: 10px; font-weight: bold; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        input, select { margin-top: 5px; }
+        @media (max-width: 600px) { #controls { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div id="intro">
+        <h2>Benefits of 40 Hz Stimulation</h2>
+        <p>40 Hz stimulation has shown potential benefits in Alzheimer's treatment, cognitive enhancement, neuroplasticity, sensory processing, motor function, and brain network regulation. It plays a crucial role in neural synchronization, information routing, and cortical communication, potentially improving attention, memory, and overall brain function.</p>
+    </div>
+    <div id="warning">
+        <h2>Warning: Non-Medical Use Only</h2>
+        <p>This tool is for experimental and recreational purposes only. It is not a medical device and should not be used to diagnose, treat, cure, or prevent any disease. If you have a history of epilepsy or seizures, do not use this tool. Consult a healthcare professional before use.</p>
+        <button id="acceptWarning">I Understand</button>
+    </div>
+    <div id="mainContent" style="display:none;">
+        <h1>Advanced Audio-Visual Stimulation Tool</h1>
+        <div id="stimulationArea">
+            <div id="flashArea"></div>
+            <div id="ballArea">
+                <div id="ball"></div>
+            </div>
+        </div>
+        <div id="status">Status: Stopped</div>
+        <div id="ballFreqIndicator">Ball Frequency: 0 Hz</div>
+        <div id="audioSpeedIndicator">Audio Movement Speed: 0 Hz</div>
+        <div id="controls">
+            <button id="startBtn">Start</button>
+            <button id="stopBtn">Stop</button>
+            <button id="fullscreenBtn">Fullscreen</button>
+            <div>
+                <label for="visualType">Visual Stimulation:</label>
+                <select id="visualType">
+                    <option value="flashing">Flashing</option>
+                    <option value="bilateral">Bilateral</option>
+                    <option value="combined">Combined</option>
+                </select>
+            </div>
+            <div>
+                <label for="audioType">Audio Stimulation:</label>
+                <select id="audioType">
+                    <option value="pureTone">Pure Tone</option>
+                    <option value="bilateral">Bilateral</option>
+                    <option value="binaural">Binaural Beats</option>
+                    <option value="combined">Combined</option>
+                </select>
+            </div>
+            <div>
+                <label for="visualFreq">Visual Frequency (Hz):</label>
+                <input type="number" id="visualFreq" min="0.1" max="100" step="0.1" value="40">
+            </div>
+            <div>
+                <label for="audioFreq">Audio Frequency (Hz):</label>
+                <input type="number" id="audioFreq" min="20" max="20000" step="1" value="40">
+            </div>
+            <div>
+                <label for="leftFreq">Left Frequency (Hz):</label>
+                <input type="number" id="leftFreq" min="20" max="20000" step="1" value="240">
+            </div>
+            <div>
+                <label for="rightFreq">Right Frequency (Hz):</label>
+                <input type="number" id="rightFreq" min="20" max="20000" step="1" value="200">
+            </div>
+            <div>
+                <label for="duration">Duration (minutes):</label>
+                <input type="number" id="duration" min="1" max="120" value="60">
+            </div>
+            <div>
+                <label for="ballSpeed">Ball Speed (Hz):</label>
+                <input type="number" id="ballSpeed" min="0.1" max="10" step="0.1" value="1">
+            </div>
+            <div>
+                <label for="audioSpeed">Audio Movement Speed (Hz):</label>
+                <input type="number" id="audioSpeed" min="0.1" max="10" step="0.1" value="1">
+            </div>
+            <div>
+                <label for="bgColor">Background Color:</label>
+                <input type="color" id="bgColor" value="#808080">
+            </div>
+            <div>
+                <label for="flashColor">Flash Color:</label>
+                <input type="color" id="flashColor" value="#FFFFFF">
+            </div>
+            <div>
+                <label for="ballColor">Ball Color:</label>
+                <input type="color" id="ballColor" value="#FF0000">
+            </div>
+        </div>
+    </div>
+    <script>
+        let audioContext, leftOscillator, rightOscillator, leftGain, rightGain, stereoPanner;
+        let isRunning = false, ballPosition = 0, ballDirection = 1;
+        let animationFrameId, audioIntervalId, flashIntervalId;
+
+        document.getElementById('acceptWarning').addEventListener('click', () => {
+            document.getElementById('intro').style.display = 'none';
+            document.getElementById('warning').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        });
+
+        document.getElementById('startBtn').addEventListener('click', startStimulation);
+        document.getElementById('stopBtn').addEventListener('click', stopStimulation);
+        document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+        document.getElementById('audioType').addEventListener('change', updateStimulation);
+        document.getElementById('visualType').addEventListener('change', updateStimulation);
+
+        ['visualFreq', 'audioFreq', 'leftFreq', 'rightFreq', 'ballSpeed', 'audioSpeed', 'bgColor', 'flashColor', 'ballColor'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateStimulation);
+        });
+
+        function startStimulation() {
+            if (isRunning) return;
+            isRunning = true;
+            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            updateStimulation();
+            document.getElementById('status').textContent = 'Status: Running';
+        }
+
+        function updateStimulation() {
+            if (!isRunning) return;
+
+            const visualType = document.getElementById('visualType').value;
+            const audioType = document.getElementById('audioType').value;
+            const visualFreq = clamp(parseFloat(document.getElementById('visualFreq').value), 0.1, 100);
+            const audioFreq = clamp(parseFloat(document.getElementById('audioFreq').value), 20, 20000);
+            const leftFreq = clamp(parseFloat(document.getElementById('leftFreq').value), 20, 20000);
+            const rightFreq = clamp(parseFloat(document.getElementById('rightFreq').value), 20, 20000);
+            const ballSpeed = clamp(parseFloat(document.getElementById('ballSpeed').value), 0.1, 10);
+            const audioSpeed = clamp(parseFloat(document.getElementById('audioSpeed').value), 0.1, 10);
+            const bgColor = document.getElementById('bgColor').value;
+            const flashColor = document.getElementById('flashColor').value;
+            const ballColor = document.getElementById('ballColor').value;
+
+            document.getElementById('stimulationArea').style.backgroundColor = bgColor;
+            document.getElementById('ball').style.backgroundColor = ballColor;
+
+            if (visualType === 'flashing' || visualType === 'combined') {
+                updateFlashing(visualFreq, flashColor);
+            }
+            if (visualType === 'bilateral' || visualType === 'combined') {
+                updateBilateralVisual(ballSpeed);
+            }
+
+            updateAudio(audioType, audioFreq, audioSpeed, leftFreq, rightFreq);
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
+        function updateFlashing(frequency, color) {
+            clearInterval(flashIntervalId);
+            const flashArea = document.getElementById('flashArea');
+            flashArea.style.backgroundColor = 'transparent';
+            flashIntervalId = setInterval(() => {
+                flashArea.style.backgroundColor = flashArea.style.backgroundColor === 'transparent' ? color : 'transparent';
+            }, 1000 / (2 * frequency));
+        }
+
+        function updateBilateralVisual(speed) {
+            cancelAnimationFrame(animationFrameId);
+            const ball = document.getElementById('ball');
+            const ballArea = document.getElementById('ballArea');
+
+            function animateBall() {
+                if (!isRunning) return;
+                const maxX = ballArea.clientWidth - ball.clientWidth;
+                ballPosition += speed * ballDirection * 5;
+                if (ballPosition > maxX) {
+                    ballPosition = maxX;
+                    ballDirection = -1;
+                } else if (ballPosition < 0) {
+                    ballPosition = 0;
+                    ballDirection = 1;
+                }
+                ball.style.left = `${ballPosition}px`;
+                document.getElementById('ballFreqIndicator').textContent = `Ball Frequency: ${speed.toFixed(2)} Hz`;
+                animationFrameId = requestAnimationFrame(animateBall);
+            }
+            animateBall();
+        }
+
+        function updateAudio(type, frequency, speed, leftFreq, rightFreq) {
+            if (leftOscillator) {
+                leftOscillator.stop();
+                rightOscillator.stop();
+            }
+            clearInterval(audioIntervalId);
+
+            leftOscillator = audioContext.createOscillator();
+            rightOscillator = audioContext.createOscillator();
+            leftGain = audioContext.createGain();
+            rightGain = audioContext.createGain();
+            stereoPanner = audioContext.createStereoPanner();
+
+            leftOscillator.connect(leftGain);
+            rightOscillator.connect(rightGain);
+            leftGain.connect(stereoPanner);
+            rightGain.connect(stereoPanner);
+            stereoPanner.connect(audioContext.destination);
+
+            if (type === 'bilateral' || type === 'combined') {
+                leftOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                rightOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            } else if (type === 'binaural') {
+                leftOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                rightOscillator.frequency.setValueAtTime(frequency + 10, audioContext.currentTime);
+            } else {
+                leftOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                rightOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            }
+
+            leftOscillator.start();
+            rightOscillator.start();
+
+            if (type === 'bilateral' || type === 'combined') {
+                let panPosition = -1;
+                let leftVolume = 1;
+                let rightVolume = 0;
+                audioIntervalId = setInterval(() => {
+                    panPosition *= -1;
+                    stereoPanner.pan.setValueAtTime(panPosition, audioContext.currentTime);
+                    if (type === 'combined') {
+                        leftVolume = (panPosition + 1) / 2;
+                        rightVolume = 1 - leftVolume;
+                        leftGain.gain.setValueAtTime(leftVolume, audioContext.currentTime);
+                        rightGain.gain.setValueAtTime(rightVolume, audioContext.currentTime);
+                        leftOscillator.frequency.setValueAtTime(leftFreq * leftVolume + rightFreq * rightVolume, audioContext.currentTime);
+                        rightOscillator.frequency.setValueAtTime(rightFreq * rightVolume + leftFreq * leftVolume, audioContext.currentTime);
+                    }
+                }, 1000 / (2 * speed));
+            }
+
+            document.getElementById('audioSpeedIndicator').textContent = `Audio Movement Speed: ${speed.toFixed(2)} Hz`;
+        }
+
+        function stopStimulation() {
+            isRunning = false;
+            cancelAnimationFrame(animationFrameId);
+            clearInterval(audioIntervalId);
+            clearInterval(flashIntervalId);
+            document.getElementById('flashArea').style.backgroundColor = 'transparent';
+            if (leftOscillator) {
+                leftOscillator.stop();
+                rightOscillator.stop();
+            }
+            document.getElementById('status').textContent = 'Status: Stopped';
+        }
+
+        function toggleFullscreen() {
+            const elem = document.getElementById('stimulationArea');
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen?.() || elem.webkitRequestFullscreen?.() || elem.msRequestFullscreen?.();
+            } else {
+                document.exitFullscreen?.() || document.webkitExitFullscreen?.() || document.msExitFullscreen?.();
+            }
+        }
+
+        if (!(window.AudioContext || window.webkitAudioContext)) {
+            alert("Web Audio API is not supported in this browser. The audio features may not work.");
+        }
+    </script>
+</body>
+</html>
+
+
